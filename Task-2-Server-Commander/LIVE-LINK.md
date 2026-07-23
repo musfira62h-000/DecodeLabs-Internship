@@ -4,5 +4,5 @@
 
 Served from an Azure Virtual Machine (`decodelabs-server`, Ubuntu 24.04 + Apache) · Cloud Computing Project 2 · DecodeLabs
 
-> Goes live once Apache is installed and the page is deployed on the VM.
-> Note: the public IP can change if the VM is stopped/deallocated — reserve a static IP to keep it fixed.
+> The public IP is **static**, so it stays the same across stop/start.
+> To save cloud credit, the VM is **started on demand** — if the link doesn't load, the server is stopped; start the VM from the Azure Portal and it will be live again at the same IP.
