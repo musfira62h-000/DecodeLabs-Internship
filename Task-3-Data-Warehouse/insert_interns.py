@@ -1,9 +1,10 @@
 """
-DecodeLabs Project 3 - Bonus: connect to managed PostgreSQL and verify Interns data.
+DecodeLabs Project 3 (AWS) - connect to RDS MySQL via SSH tunnel / local port.
 
-Setup:
-  1. pip install -r requirements.txt
-  2. Copy .env.example to .env and fill in your Azure DB credentials
+Typical flow:
+  1. Start SSH tunnel to private RDS through EC2 bastion:
+       ssh -i key.pem -L 3307:YOUR-RDS-ENDPOINT:3306 ec2-user@BASTION-PUBLIC-IP -N
+  2. Fill .env (see .env.example) — DB_HOST=127.0.0.1, DB_PORT=3307
   3. python insert_interns.py
 """
 
@@ -11,13 +12,12 @@ import os
 import sys
 
 try:
-    import psycopg2
-    from psycopg2.extras import RealDictCursor
+    import pymysql
 except ImportError:
     print("Missing dependency. Run: pip install -r requirements.txt")
     sys.exit(1)
 
-# Load .env if present (optional helper)
+
 def load_env():
     env_path = os.path.join(os.path.dirname(__file__), ".env")
     if not os.path.isfile(env_path):
@@ -33,37 +33,34 @@ def load_env():
 
 load_env()
 
-HOST = os.getenv("DB_HOST", "")
-PORT = os.getenv("DB_PORT", "5432")
-DBNAME = os.getenv("DB_NAME", "postgres")
-USER = os.getenv("DB_USER", "")
+HOST = os.getenv("DB_HOST", "127.0.0.1")
+PORT = int(os.getenv("DB_PORT", "3307"))
+DBNAME = os.getenv("DB_NAME", "internsdb")
+USER = os.getenv("DB_USER", "admin")
 PASSWORD = os.getenv("DB_PASSWORD", "")
-SSLMODE = os.getenv("DB_SSLMODE", "require")
-
-
-def connect():
-    if not HOST or not USER or not PASSWORD:
-        print("Set DB_HOST, DB_USER, and DB_PASSWORD in .env (see .env.example).")
-        sys.exit(1)
-    return psycopg2.connect(
-        host=HOST,
-        port=PORT,
-        dbname=DBNAME,
-        user=USER,
-        password=PASSWORD,
-        sslmode=SSLMODE,
-    )
 
 
 def main():
-    print("Connecting to cloud database...")
-    conn = connect()
-    cur = conn.cursor(cursor_factory=RealDictCursor)
+    if not PASSWORD:
+        print("Set DB_PASSWORD in .env (see .env.example).")
+        sys.exit(1)
+
+    print(f"Connecting to MySQL at {HOST}:{PORT} / {DBNAME} ...")
+    conn = pymysql.connect(
+        host=HOST,
+        port=PORT,
+        user=USER,
+        password=PASSWORD,
+        database=DBNAME,
+        cursorclass=pymysql.cursors.DictCursor,
+        autocommit=True,
+    )
+    cur = conn.cursor()
 
     cur.execute(
         """
         CREATE TABLE IF NOT EXISTS Interns (
-          id SERIAL PRIMARY KEY,
+          id INT AUTO_INCREMENT PRIMARY KEY,
           Name  VARCHAR(100) NOT NULL,
           Role  VARCHAR(100) NOT NULL,
           Email VARCHAR(150) NOT NULL UNIQUE
@@ -81,23 +78,20 @@ def main():
     for name, role, email in rows:
         cur.execute(
             """
-            INSERT INTO Interns (Name, Role, Email)
-            VALUES (%s, %s, %s)
-            ON CONFLICT (Email) DO NOTHING;
+            INSERT IGNORE INTO Interns (Name, Role, Email)
+            VALUES (%s, %s, %s);
             """,
             (name, role, email),
         )
 
-    conn.commit()
-
     cur.execute("SELECT id, Name, Role, Email FROM Interns ORDER BY id;")
     results = cur.fetchall()
     print(f"\nInterns table ({len(results)} rows):")
-    print("-" * 60)
+    print("-" * 70)
     for r in results:
         print(f"{r['id']:>3} | {r['Name']:<20} | {r['Role']:<26} | {r['Email']}")
-    print("-" * 60)
-    print("Done. Data persisted in the cloud database.")
+    print("-" * 70)
+    print("Done. Data persisted in AWS RDS MySQL.")
 
     cur.close()
     conn.close()

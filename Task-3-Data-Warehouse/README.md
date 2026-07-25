@@ -1,34 +1,43 @@
-# Task 3 — The Data Warehouse
+# Task 3 — The Data Warehouse (AWS RDS MySQL)
 
-Provision a managed cloud database, create an `Interns` table, and insert dummy records.
+Managed cloud database on **AWS RDS (MySQL)** in a **private subnet**, accessed via **SSH tunnel**.
 
-**Cloud:** Azure Database for PostgreSQL (managed / DBaaS)  
-**Bonus:** Python script to connect and verify data persistence
+## Milestone checklist
+- [ ] MySQL/MariaDB RDS in a **private subnet**
+- [ ] Security Group locked to **port 3306**
+- [ ] Table `Interns` with **PRIMARY KEY**, **UNIQUE**, **NOT NULL**
+- [ ] Dummy records via `INSERT INTO`
+- [ ] Screenshot of `SELECT` via **MySQL Workbench** or **Python** over **SSH tunnel**
 
 ## Files
-- `schema.sql` — creates `Interns (Name, Role, Email)`
-- `seed.sql` — dummy records
-- `insert_interns.py` — bonus Python connector
-- `requirements.txt` — Python deps
-- `.env.example` — DB credentials template (copy to `.env`, never commit `.env`)
-- `LIVE-LINK.md` — server / connection details after setup
+- `schema.sql` — creates `Interns`
+- `seed.sql` — dummy rows
+- `insert_interns.py` — Python connector (via tunnel)
+- `requirements.txt` / `.env.example`
+- `LIVE-LINK.md` — fill after RDS is created
+- `ssh-tunnel.example.ps1` — tunnel command template
 
-## Azure setup (short)
-1. Portal → **Azure Database for PostgreSQL flexible servers** → **Create**
-2. Resource group: `portfolio-rg2` · Server name: `decodelabs-interns-db` · Region: Central India
-3. Workload: **Development** · Compute: smallest burstable (e.g. **B1ms**)
-4. Admin username + strong password (save them)
-5. Networking: **Allow public access** + **Allow public access from any Azure service** + add your client IP (firewall)
-6. Create → open server → **Database** ready
-7. Connect with **Azure Cloud Shell** / **pgAdmin** / **psql** / Python:
-   - Run `schema.sql` then `seed.sql`
-   - Or: `pip install -r requirements.txt` → copy `.env.example` to `.env` → `python insert_interns.py`
+## Architecture (what you build)
+1. **VPC** with public + private subnets  
+2. **EC2 bastion** in public subnet (SSH port 22)  
+3. **RDS MySQL** in private subnet (not publicly accessible)  
+4. **RDS Security Group:** inbound **3306** only from the bastion SG  
+5. Connect from your PC with SSH tunnel → MySQL Workbench / Python
 
-## Verify
-```sql
-SELECT * FROM Interns;
+## Quick connect (after infra exists)
+```powershell
+# Terminal 1 — keep this open (SSH tunnel)
+ssh -i "C:\Users\hp\Downloads\your-key.pem" -L 3307:YOUR-RDS-ENDPOINT:3306 ec2-user@BASTION-PUBLIC-IP -N
+
+# Terminal 2 — Python
+cd "C:\Users\hp\Documents\Decodelabs_task1\Task-3-Data-Warehouse"
+pip install -r requirements.txt
+copy .env.example .env
+# edit .env with password, then:
+python insert_interns.py
 ```
-You should see your dummy rows — data persists in the cloud.
+
+Or MySQL Workbench: host `127.0.0.1`, port `3307`, user/password from RDS.
 
 ## Cost tip
-Stop / delete the PostgreSQL server when grading is done to save Azure credit.
+Stop/terminate EC2 + delete RDS when grading is done (RDS is the main cost).
