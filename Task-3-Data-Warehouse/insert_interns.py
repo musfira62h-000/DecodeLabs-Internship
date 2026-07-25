@@ -1,17 +1,13 @@
 """
-DecodeLabs Project 3 (Azure) - connect to Azure Database for MySQL and verify Interns data.
-
-Setup:
-  1. pip install -r requirements.txt
-  2. Copy .env.example to .env and fill credentials
-  3. python insert_interns.py
+DecodeLabs Project 3 (Azure PostgreSQL) - connect and verify Interns data.
 """
 
 import os
 import sys
 
 try:
-    import pymysql
+    import psycopg2
+    from psycopg2.extras import RealDictCursor
 except ImportError:
     print("Missing dependency. Run: pip install -r requirements.txt")
     sys.exit(1)
@@ -32,36 +28,34 @@ def load_env():
 
 load_env()
 
-HOST = os.getenv("DB_HOST", "")
-PORT = int(os.getenv("DB_PORT", "3306"))
-DBNAME = os.getenv("DB_NAME", "internsdb")
-USER = os.getenv("DB_USER", "")
+HOST = os.getenv("DB_HOST", "decodelabs-interns-mysql.postgres.database.azure.com")
+PORT = os.getenv("DB_PORT", "5432")
+DBNAME = os.getenv("DB_NAME", "postgres")
+USER = os.getenv("DB_USER", "decodelabsinterns1")
 PASSWORD = os.getenv("DB_PASSWORD", "")
-SSL = os.getenv("DB_SSL", "true").lower() in ("1", "true", "yes")
+SSLMODE = os.getenv("DB_SSLMODE", "require")
 
 
 def main():
-    if not HOST or not USER or not PASSWORD:
-        print("Set DB_HOST, DB_USER, and DB_PASSWORD in .env (see .env.example).")
+    if not PASSWORD:
+        print("Set DB_PASSWORD in .env (see .env.example).")
         sys.exit(1)
 
-    print(f"Connecting to Azure MySQL at {HOST}:{PORT} / {DBNAME} ...")
-    conn = pymysql.connect(
+    print(f"Connecting to {HOST} ...")
+    conn = psycopg2.connect(
         host=HOST,
         port=PORT,
+        dbname=DBNAME,
         user=USER,
         password=PASSWORD,
-        database=DBNAME,
-        ssl={"ssl": {}} if SSL else None,
-        cursorclass=pymysql.cursors.DictCursor,
-        autocommit=True,
+        sslmode=SSLMODE,
     )
-    cur = conn.cursor()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
 
     cur.execute(
         """
         CREATE TABLE IF NOT EXISTS Interns (
-          id INT AUTO_INCREMENT PRIMARY KEY,
+          id SERIAL PRIMARY KEY,
           Name  VARCHAR(100) NOT NULL,
           Role  VARCHAR(100) NOT NULL,
           Email VARCHAR(150) NOT NULL UNIQUE
@@ -79,12 +73,14 @@ def main():
     for name, role, email in rows:
         cur.execute(
             """
-            INSERT IGNORE INTO Interns (Name, Role, Email)
-            VALUES (%s, %s, %s);
+            INSERT INTO Interns (Name, Role, Email)
+            VALUES (%s, %s, %s)
+            ON CONFLICT (Email) DO NOTHING;
             """,
             (name, role, email),
         )
 
+    conn.commit()
     cur.execute("SELECT id, Name, Role, Email FROM Interns ORDER BY id;")
     results = cur.fetchall()
     print(f"\nInterns table ({len(results)} rows):")
@@ -92,7 +88,7 @@ def main():
     for r in results:
         print(f"{r['id']:>3} | {r['Name']:<20} | {r['Role']:<26} | {r['Email']}")
     print("-" * 70)
-    print("Done. Data persisted in Azure Database for MySQL.")
+    print("Done. Data persisted in Azure PostgreSQL.")
 
     cur.close()
     conn.close()

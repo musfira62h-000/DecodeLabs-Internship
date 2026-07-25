@@ -1,12 +1,16 @@
-# Azure MySQL Connection Details
+# Azure PostgreSQL Connection Details
 
-**Service:** Azure Database for MySQL Flexible Server  
-**Server name:** *(fill after create — e.g. `decodelabs-interns-mysql`)*  
-**Endpoint:** `*.mysql.database.azure.com`  
-**Port:** `3306`  
-**Database:** `internsdb`  
-**Admin username:** *(e.g. `decodelabsadmin`)*  
-**Table:** `Interns` (`Name`, `Role`, `Email`) with PRIMARY KEY, UNIQUE, NOT NULL
+**Service:** Azure Database for PostgreSQL Flexible Server  
+**Server name:** `decodelabs-interns-mysql`  
+**Endpoint:** `decodelabs-interns-mysql.postgres.database.azure.com`  
+**Port:** `5432`  
+**Database:** `postgres`  
+**Admin username:** `decodelabsinterns1`  
+**Table:** `Interns` (`Name`, `Role`, `Email`) — PRIMARY KEY, UNIQUE, NOT NULL  
 
-> Do **not** put the password in this file or on GitHub.
-> Stop/delete the server when grading is done to save credit.
+## Screenshots
+- `screenshots/01-deployment-complete.png` — deployment succeeded  
+- `screenshots/02-server-overview.png` — server overview / endpoint  
+
+> Password is private — do not commit it.  
+> Note: server name contains "mysql" but the engine is **PostgreSQL**.
