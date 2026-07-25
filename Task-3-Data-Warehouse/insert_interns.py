@@ -1,10 +1,9 @@
 """
-DecodeLabs Project 3 (AWS) - connect to RDS MySQL via SSH tunnel / local port.
+DecodeLabs Project 3 (Azure) - connect to Azure Database for MySQL and verify Interns data.
 
-Typical flow:
-  1. Start SSH tunnel to private RDS through EC2 bastion:
-       ssh -i key.pem -L 3307:YOUR-RDS-ENDPOINT:3306 ec2-user@BASTION-PUBLIC-IP -N
-  2. Fill .env (see .env.example) — DB_HOST=127.0.0.1, DB_PORT=3307
+Setup:
+  1. pip install -r requirements.txt
+  2. Copy .env.example to .env and fill credentials
   3. python insert_interns.py
 """
 
@@ -33,25 +32,27 @@ def load_env():
 
 load_env()
 
-HOST = os.getenv("DB_HOST", "127.0.0.1")
-PORT = int(os.getenv("DB_PORT", "3307"))
+HOST = os.getenv("DB_HOST", "")
+PORT = int(os.getenv("DB_PORT", "3306"))
 DBNAME = os.getenv("DB_NAME", "internsdb")
-USER = os.getenv("DB_USER", "admin")
+USER = os.getenv("DB_USER", "")
 PASSWORD = os.getenv("DB_PASSWORD", "")
+SSL = os.getenv("DB_SSL", "true").lower() in ("1", "true", "yes")
 
 
 def main():
-    if not PASSWORD:
-        print("Set DB_PASSWORD in .env (see .env.example).")
+    if not HOST or not USER or not PASSWORD:
+        print("Set DB_HOST, DB_USER, and DB_PASSWORD in .env (see .env.example).")
         sys.exit(1)
 
-    print(f"Connecting to MySQL at {HOST}:{PORT} / {DBNAME} ...")
+    print(f"Connecting to Azure MySQL at {HOST}:{PORT} / {DBNAME} ...")
     conn = pymysql.connect(
         host=HOST,
         port=PORT,
         user=USER,
         password=PASSWORD,
         database=DBNAME,
+        ssl={"ssl": {}} if SSL else None,
         cursorclass=pymysql.cursors.DictCursor,
         autocommit=True,
     )
@@ -91,7 +92,7 @@ def main():
     for r in results:
         print(f"{r['id']:>3} | {r['Name']:<20} | {r['Role']:<26} | {r['Email']}")
     print("-" * 70)
-    print("Done. Data persisted in AWS RDS MySQL.")
+    print("Done. Data persisted in Azure Database for MySQL.")
 
     cur.close()
     conn.close()

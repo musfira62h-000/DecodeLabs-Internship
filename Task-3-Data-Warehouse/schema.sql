@@ -1,4 +1,4 @@
--- DecodeLabs Project 3 - The Data Warehouse (AWS RDS MySQL)
+-- DecodeLabs Project 3 - The Data Warehouse (Azure Database for MySQL)
 -- Interns table with PRIMARY KEY, UNIQUE, NOT NULL
 
 CREATE TABLE IF NOT EXISTS Interns (
