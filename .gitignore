@@ -15,4 +15,15 @@ Desktop.ini
 # Node (in case future tasks use it)
 node_modules/
 dist/
+
+# Secrets / env
 .env
+**/.env
+*.pem
+decodelabs-key.pem
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
