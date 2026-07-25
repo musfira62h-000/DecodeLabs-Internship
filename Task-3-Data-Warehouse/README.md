@@ -6,7 +6,10 @@ Managed cloud database on **Azure Database for PostgreSQL Flexible Server**.
 **Admin:** `decodelabsinterns1`
 
 ## Screenshots
-See [`screenshots/`](./screenshots/) for deployment proof.
+See [`screenshots/`](./screenshots/) for proof:
+- `01-deployment-complete.png`
+- `02-server-overview.png`
+- `03-select-interns.png` — Interns table with 5 rows ✅
 
 ## Files
 - `schema.sql` / `seed.sql` — table + dummy data

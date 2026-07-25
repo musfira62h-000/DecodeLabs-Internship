@@ -11,6 +11,10 @@
 ## Screenshots
 - `screenshots/01-deployment-complete.png` — deployment succeeded  
 - `screenshots/02-server-overview.png` — server overview / endpoint  
+- `screenshots/03-select-interns.png` — `SELECT * FROM Interns;` (5 rows verified)
+
+## Verification
+Table created + 5 dummy rows inserted via Cloud Shell (`psql`). Status: **Complete** ✅
 
 > Password is private — do not commit it.  
 > Note: server name contains "mysql" but the engine is **PostgreSQL**.
